@@ -35,3 +35,20 @@ The public source-checks workflow verifies generated references, documentation,
 the runtime manifest, and the Kinetic/capture JavaScript contracts. It does not
 run a live renderer, install Hermes, perform complete Python integration tests,
 or certify installed-client acceptance.
+
+## Public snapshot results
+
+The clean snapshot passed 470 Python tests and 205 subtests, 135 JavaScript
+checks, and all 13 real Chromium timeline-layout cases. The real-render test
+used an explicitly selected existing delegated resource root; no host delegation
+was changed. Generated skill metadata, tool references and documentation passed.
+
+The official isolated `hermes plugins validate --install-deps` check passed all
+16 checks. Actual native registration preserved all 67 skills, 11 tools and
+four hook names without a runtime PyYAML dependency. Payload and confinement
+checks passed. Remaining scanner warnings are three process-access sites and
+11 private Hermes imports; these are disclosed compatibility risks.
+
+The public runtime manifest uses Git-portable file modes and is checked again
+from a fresh clone. These results do not supersede the broader acceptance
+limitations in [compatibility](compatibility.md).
