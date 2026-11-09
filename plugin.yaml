@@ -1,0 +1,22 @@
+name: motion-studio
+version: 0.1.0
+description: Motion Studio durable projects and bounded owned local-media execution with validated collection and native host handoffs.
+provides_tools:
+  - motion_project
+  - motion_capabilities
+  - motion_asset
+  - motion_asset_library
+  - motion_storyboard
+  - motion_plan
+  - motion_run
+  - motion_caption
+  - motion_review
+  - motion_deliver
+  - motion_ui_handoff
+provides_hooks:
+  - pre_api_request
+  - pre_tool_call
+  - post_tool_call
+  - post_api_request
+python_dependencies: []
+capabilities: []

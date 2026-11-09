@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "motion/v1/SidecarRecord",
+  "type": "object",
+  "properties": {
+    "artifact": {
+      "$ref": "#/$defs/ArtifactRef"
+    },
+    "role": {
+      "const": "subtitles"
+    },
+    "variant": {
+      "$ref": "#/$defs/DocumentRef"
+    },
+    "caption": {
+      "$ref": "#/$defs/DocumentRef"
+    },
+    "placement": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ArtifactRef"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "language": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384
+    },
+    "format": {
+      "type": "string",
+      "enum": [
+        "srt",
+        "vtt",
+        "ass"
+      ]
+    },
+    "time_origin": {
+      "type": "string",
+      "enum": [
+        "source",
+        "delivery"
+      ]
+    },
+    "timing_receipt": {
+      "$ref": "#/$defs/ArtifactRef"
+    }
+  },
+  "required": [
+    "artifact",
+    "role",
+    "variant",
+    "caption",
+    "placement",
+    "language",
+    "format",
+    "time_origin",
+    "timing_receipt"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "ArtifactRef": {
+      "type": "object",
+      "properties": {
+        "artifact_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^art_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sha256": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "artifact_id",
+        "sha256"
+      ],
+      "additionalProperties": false
+    },
+    "DocumentRef": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "brief",
+            "brand",
+            "timeline",
+            "scene",
+            "settings",
+            "variants",
+            "bindings",
+            "caption",
+            "caption_style",
+            "delivery_profile",
+            "gate_policy",
+            "asset_library",
+            "storyboard"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "sha256": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "kind",
+        "id",
+        "revision",
+        "sha256"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

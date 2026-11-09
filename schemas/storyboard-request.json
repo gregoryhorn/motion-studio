@@ -1,0 +1,239 @@
+{
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "action": {
+          "const": "get"
+        },
+        "project_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^prj_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "action",
+        "project_id"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "action": {
+          "const": "view"
+        },
+        "project_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^prj_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "action",
+        "project_id"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "action": {
+          "const": "update"
+        },
+        "project_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^prj_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "expected_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "request_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "value": {
+          "$ref": "#/$defs/Storyboard"
+        }
+      },
+      "required": [
+        "action",
+        "project_id",
+        "expected_revision",
+        "request_id",
+        "value"
+      ],
+      "additionalProperties": false
+    }
+  ],
+  "$defs": {
+    "ArtifactRef": {
+      "type": "object",
+      "properties": {
+        "artifact_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^art_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sha256": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "artifact_id",
+        "sha256"
+      ],
+      "additionalProperties": false
+    },
+    "StoryboardPanel": {
+      "type": "object",
+      "properties": {
+        "panel_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "duration_frames": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "visual": {
+          "$ref": "#/$defs/ArtifactRef"
+        },
+        "asset_requirements": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 16384,
+            "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+          },
+          "minItems": 0,
+          "maxItems": 1000
+        },
+        "narration": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384
+        },
+        "on_screen_text": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384
+        },
+        "motion": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384
+        },
+        "transition": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384
+        }
+      },
+      "required": [
+        "panel_id",
+        "title",
+        "duration_frames",
+        "visual",
+        "asset_requirements",
+        "narration",
+        "on_screen_text",
+        "motion",
+        "transition",
+        "notes"
+      ],
+      "additionalProperties": false
+    },
+    "Storyboard": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "asset_library_sha256": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "panels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/StoryboardPanel"
+          },
+          "minItems": 1,
+          "maxItems": 1000
+        },
+        "review": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "feedback",
+                "ready"
+              ]
+            },
+            "notes": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 16384
+            }
+          },
+          "required": [
+            "status",
+            "notes"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "title",
+        "asset_library_sha256",
+        "panels",
+        "review"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "schema": "motion/third-party-provenance/v1",
+  "component": "scenario-kinetic-film",
+  "copyright": "Copyright (c) 2026 Scenario Inc.",
+  "license": "MIT",
+  "repository": "https://github.com/scenario-labs/skills",
+  "revision": "b96506d77c8595a4fe9c66eddb0bf9b5953a1d45",
+  "addition_commit": "adc5af00c86754a2afe16b7e4cc7e688f5fdab0c",
+  "path": "skills/scenario-kinetic-film/assets/engine",
+  "license_path": "LICENSE",
+  "original_archive_sha256": "74f587732b87c585a87d93ef647e8de4f736063dabd140805a3993c7418834c1",
+  "relationship": "Derived adaptation, not independently authored replacement",
+  "fonts_license": "SIL OFL 1.1; retain individual notices in fonts/"
+}

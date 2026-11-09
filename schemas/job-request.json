@@ -1,0 +1,656 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "motion/v1/job-request",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "action": {
+          "const": "submit"
+        },
+        "project_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^prj_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "expected_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "plan": {
+          "type": "object",
+          "properties": {
+            "plan_id": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 16384,
+              "pattern": "^pln_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "plan_revision": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "plan_sha256": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 16384,
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "plan_id",
+            "plan_revision",
+            "plan_sha256"
+          ],
+          "additionalProperties": false
+        },
+        "authority_ref": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384
+        },
+        "retry_of_job_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^job_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        }
+      },
+      "required": [
+        "action",
+        "project_id",
+        "request_id",
+        "expected_revision",
+        "plan"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "action": {
+          "const": "status"
+        },
+        "project_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^prj_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "job_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^job_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "section": {
+          "type": "string",
+          "enum": [
+            "summary",
+            "nodes",
+            "attempts",
+            "handoffs",
+            "outputs"
+          ]
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "cursor": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384
+        },
+        "snapshot_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^snp_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        }
+      },
+      "required": [
+        "action",
+        "project_id",
+        "job_id"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "action": {
+          "const": "list"
+        },
+        "project_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^prj_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "planned",
+            "queued",
+            "running",
+            "awaiting_external",
+            "review_needed",
+            "succeeded",
+            "failed",
+            "cancelled",
+            "interrupted"
+          ]
+        },
+        "plan_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^pln_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "cursor": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384
+        },
+        "snapshot_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^snp_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        }
+      },
+      "required": [
+        "action",
+        "project_id"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "action": {
+          "const": "cancel"
+        },
+        "project_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^prj_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "job_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^job_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "expected_job_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384
+        }
+      },
+      "required": [
+        "action",
+        "project_id",
+        "request_id",
+        "job_id",
+        "expected_job_revision",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "action": {
+          "const": "reconcile"
+        },
+        "project_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^prj_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "job_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^job_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "expected_job_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "action",
+        "project_id",
+        "request_id",
+        "job_id",
+        "expected_job_revision"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "action": {
+          "const": "handoff_claim"
+        },
+        "project_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^prj_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "job_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^job_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "expected_job_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "handoff_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^hnd_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "attempt_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^att_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        }
+      },
+      "required": [
+        "action",
+        "project_id",
+        "request_id",
+        "job_id",
+        "expected_job_revision",
+        "handoff_id",
+        "attempt_id"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "action": {
+          "const": "collect"
+        },
+        "project_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^prj_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "job_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^job_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "expected_job_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "receipts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "handoff_id": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 16384,
+                "pattern": "^hnd_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "attempt_id": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 16384,
+                "pattern": "^att_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "request_sha256": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 16384,
+                "pattern": "^sha256:[0-9a-f]{64}$"
+              },
+              "host_call_ref": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 16384
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "succeeded",
+                  "failed",
+                  "uncertain"
+                ]
+              },
+              "outputs": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "port": {
+                      "type": "string",
+                      "minLength": 0,
+                      "maxLength": 16384
+                    },
+                    "locator": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "local"
+                            },
+                            "path": {
+                              "type": "string",
+                              "minLength": 0,
+                              "maxLength": 16384
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "path"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "remote"
+                            },
+                            "url": {
+                              "type": "string",
+                              "minLength": 0,
+                              "maxLength": 16384
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "url"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "port",
+                    "locator"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 0,
+                "maxItems": 1000
+              },
+              "evidence": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "artifact_id": {
+                      "type": "string",
+                      "minLength": 0,
+                      "maxLength": 16384,
+                      "pattern": "^art_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                    },
+                    "sha256": {
+                      "type": "string",
+                      "minLength": 0,
+                      "maxLength": 16384,
+                      "pattern": "^sha256:[0-9a-f]{64}$"
+                    }
+                  },
+                  "required": [
+                    "artifact_id",
+                    "sha256"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 0,
+                "maxItems": 1000
+              },
+              "reported_at": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 16384,
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]{1,6})?Z$"
+              }
+            },
+            "required": [
+              "handoff_id",
+              "attempt_id",
+              "request_sha256",
+              "host_call_ref",
+              "outcome",
+              "outputs",
+              "evidence",
+              "reported_at"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "maxItems": 1000
+        },
+        "decision_review_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 16384,
+            "pattern": "^rev_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "minItems": 0,
+          "maxItems": 1000
+        }
+      },
+      "required": [
+        "action",
+        "project_id",
+        "request_id",
+        "job_id",
+        "expected_job_revision"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "action": {
+          "const": "permission_disclose"
+        },
+        "project_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^prj_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "plan": {
+          "type": "object",
+          "properties": {
+            "plan_id": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 16384,
+              "pattern": "^pln_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "plan_revision": {
+              "const": 1
+            },
+            "plan_sha256": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 16384,
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "plan_id",
+            "plan_revision",
+            "plan_sha256"
+          ],
+          "additionalProperties": false
+        },
+        "node_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^nod_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "single",
+            "saved"
+          ]
+        },
+        "project_scope": {
+          "type": "string",
+          "enum": [
+            "project",
+            "profile"
+          ]
+        },
+        "job_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^job_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        }
+      },
+      "required": [
+        "action",
+        "project_id",
+        "plan",
+        "node_id",
+        "mode",
+        "project_scope"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "action": {
+          "const": "permission_grant"
+        },
+        "candidate_sha256": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "message_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384
+        },
+        "expected_revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "action",
+        "candidate_sha256",
+        "message_id",
+        "expected_revision"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "action": {
+          "const": "permission_inspect"
+        },
+        "project_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^prj_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        }
+      },
+      "required": [
+        "action"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "action": {
+          "const": "permission_revoke"
+        },
+        "grant_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^pmt_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "expected_revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "action",
+        "grant_id",
+        "expected_revision"
+      ],
+      "additionalProperties": false
+    }
+  ]
+}

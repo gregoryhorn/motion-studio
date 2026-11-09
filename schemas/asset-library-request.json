@@ -1,0 +1,200 @@
+{
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "action": {
+          "const": "get"
+        },
+        "project_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^prj_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "action",
+        "project_id"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "action": {
+          "const": "view"
+        },
+        "project_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^prj_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "action",
+        "project_id"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "action": {
+          "const": "update"
+        },
+        "project_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^prj_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "expected_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "request_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "value": {
+          "$ref": "#/$defs/AssetLibrary"
+        }
+      },
+      "required": [
+        "action",
+        "project_id",
+        "expected_revision",
+        "request_id",
+        "value"
+      ],
+      "additionalProperties": false
+    }
+  ],
+  "$defs": {
+    "ArtifactRef": {
+      "type": "object",
+      "properties": {
+        "artifact_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^art_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sha256": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "artifact_id",
+        "sha256"
+      ],
+      "additionalProperties": false
+    },
+    "AssetRequirement": {
+      "type": "object",
+      "properties": {
+        "requirement_id": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384,
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "image",
+            "media",
+            "audio",
+            "font",
+            "scene_source",
+            "other"
+          ]
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "missing",
+            "planned",
+            "ready"
+          ]
+        },
+        "asset": {
+          "$ref": "#/$defs/ArtifactRef"
+        },
+        "assessment": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384
+        },
+        "acquisition": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384
+        }
+      },
+      "required": [
+        "requirement_id",
+        "role",
+        "kind",
+        "required",
+        "status",
+        "assessment",
+        "acquisition"
+      ],
+      "additionalProperties": false
+    },
+    "AssetLibrary": {
+      "type": "object",
+      "properties": {
+        "assessed": {
+          "type": "boolean"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 16384
+        },
+        "requirements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AssetRequirement"
+          },
+          "minItems": 0,
+          "maxItems": 1000
+        }
+      },
+      "required": [
+        "assessed",
+        "notes",
+        "requirements"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

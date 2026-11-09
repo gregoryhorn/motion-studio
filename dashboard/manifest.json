@@ -1,0 +1,9 @@
+{
+  "name": "motion-studio",
+  "label": "Motion Studio",
+  "description": "Authenticated backend for the native Hermes Studio dock and composition timeline. No standalone dashboard editor.",
+  "version": "0.2.0",
+  "tab": {"hidden": true},
+  "entry": null,
+  "api": "plugin_api.py"
+}
