@@ -1,0 +1,83 @@
+// Offline actual packaged React/Python Music path; synthetic agent and child only.
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {spawn,execFileSync} from 'node:child_process';
+import {createInterface} from 'node:readline';
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url),{chromium}=require(process.env.PLAYWRIGHT_PACKAGE);
+const {expect}=require(path.join(process.env.PLAYWRIGHT_PACKAGE,'test.js'));
+const temp=fs.mkdtempSync(path.join(os.tmpdir(),'motion-music-browser-'));
+execFileSync('python',['-m','zipfile','-e',process.env.NATIVE_BUNDLE,temp]);
+execFileSync(process.env.ESBUILD,['tests/native-browser-fixture.js','--bundle','--format=iife','--platform=browser','--log-level=error',
+  '--alias:motion-studio-package='+path.join(temp,'motion-studio/desktop/plugin.js'),
+  '--alias:@hermes/plugin-sdk='+path.resolve('tests/native-sdk-browser.js'),'--outfile='+path.join(temp,'fixture.js')]);
+const bridge=spawn('python',['-m','tests.native_package_fixture'],{stdio:['pipe','pipe','pipe']});
+let sequence=0,stderr='';const waiting=new Map();bridge.stderr.on('data',c=>{stderr+=c;});
+const closed=new Promise(resolve=>bridge.once('exit',code=>{for(const e of waiting.values())e.reject(Error('Fixture exited'));resolve(code);}));
+createInterface({input:bridge.stdout}).on('line',line=>{const v=JSON.parse(line),e=waiting.get(v.id);waiting.delete(v.id);v.error?e.reject(Error(v.error)):e.resolve(v.result);});
+const rpc=message=>new Promise((resolve,reject)=>{const id=++sequence;waiting.set(id,{resolve,reject});bridge.stdin.write(JSON.stringify({id,...message})+'\n');});
+const browser=await chromium.launch({executablePath:process.env.CHROME_EXECUTABLE,headless:true,args:['--no-sandbox']});
+const checks=[],errors=[],check=(name,value)=>{assert.ok(value,name);checks.push(name);};
+try{
+  const context=await browser.newContext({serviceWorkers:'block',offline:true,acceptDownloads:true});
+  await context.exposeBinding('nativeRPC',(_source,message)=>rpc(message));
+  const html='<html><body><div id="root"></div><script>'+fs.readFileSync(path.join(temp,'fixture.js'),'utf8').replaceAll('</script','<\\/script')+'</script></body></html>';
+  await context.route('**/*',route=>route.request().url()==='https://motion.invalid/'?route.fulfill({contentType:'text/html',body:html}):route.abort());
+  const page=await context.newPage();page.on('pageerror',()=>errors.push('PAGE_ERROR'));
+  const button=name=>page.getByRole('button',{name,exact:true});
+  await page.goto('https://motion.invalid/');
+  check('default open has no state or effect',!(await rpc({op:'counts'})).state_created);
+  await rpc({op:'admit-creation-fixture'});
+  const args={operation:'prepare',schema_version:2,kind:'Music',direction:'Synthetic calm instrumental Music cue',seconds:10};
+  const denied=await rpc({op:'tool',args});
+  check('existing admitted SFX scope does not grant Music',denied.error==='MUSIC_SCOPE_REVIEW_REQUIRED');
+  await rpc({op:'admit-music-fixture'});
+  const lost=await rpc({op:'tool',args,discard_prepare_reply:true});
+  check('synthetic agent Prepare reply is deliberately lost',lost.delivered===false);
+  await page.reload();await button('Open saved creations').click();
+  await expect(page.getByRole('heading',{name:args.direction,exact:true})).toBeVisible();
+  const row=await rpc({op:'tool',args:{operation:'status'}}),identity=await rpc({op:'lost-prepare-identity'});
+  check('reload without remembered request recovers the same Music identity',row.request===identity.request&&row.run===identity.run);
+  check('saved Music defaults and source disclosure are visible',row.kind==='Music'&&row.defaults.seed===42&&row.defaults.steps===8&&row.defaults.instrumental===true);
+  await expect(page.getByText(/effective seed unverified/)).toBeVisible();
+  check('opening/recovery never dispatches a child',(await rpc({op:'counts'})).music_effects===0);
+  const command=Object.fromEntries(['request','revision','command','run'].map(k=>[k,row[k]]));
+  await rpc({op:'tool',args:{operation:'start',...command},discard_start_reply:true});
+  await rpc({op:'settle-creation'});
+  await page.reload();await button('Open saved creations').click();
+  await expect(page.getByText('Progress: Ready for review; certainty: exited',{exact:true})).toBeVisible();
+  check('lost Start plus reload retains one synthetic child',(await rpc({op:'counts'})).music_effects===1);
+  await expect(page.getByText(/TEST ONLY - not generated/)).toBeVisible();
+  await button('Load PCM16 review audio').click();
+  await expect(page.getByRole('status')).toContainText('Retained PCM16 derivative bytes verified');
+  const audio=page.getByLabel('Retained PCM16 review audio');
+  await expect.poll(()=>audio.evaluate(el=>Number.isFinite(el.duration)?el.duration:null)).toBe(10);
+  check('actual Chromium decodes exact ten-second synthetic derivative',await audio.evaluate(async el=>{el.muted=true;await el.play();const active=!el.paused;el.pause();return active;}));
+  const downloadEvent=page.waitForEvent('download');
+  await page.getByRole('link',{name:'Save / download PCM16 derivative WAV',exact:true}).click();
+  const download=await downloadEvent,bytes=fs.readFileSync(await download.path());
+  const first=await rpc({op:'rpc',method:'creation.chunk',payload:{session_id:'session-a',request:row.request,take:row.candidate,offset:0}});
+  check('Save/download is byte-exact scoped PCM16 derivative',bytes.length===first.total&&crypto.createHash('sha256').update(bytes).digest('hex')===first.sha256);
+  await button('Choose this take').click();await expect(page.getByText(/Selected take/)).toBeVisible();
+  await page.reload();await button('Open saved creations').click();
+  await expect(page.getByText(/Selected take/)).toBeVisible();
+  await button('Load PCM16 review audio').click();await expect(page.getByRole('status')).toContainText('Retained PCM16 derivative bytes verified');
+  check('reopen retains selected Music take with no regeneration',(await rpc({op:'counts'})).music_effects===1);
+  await page.screenshot({path:path.join(process.env.MUSIC_EVIDENCE||'docs/evidence/music-source-r1','music-wide.png'),fullPage:true});
+  await page.getByLabel('Change for another take').fill('Synthetic unsent private draft');
+  await rpc({op:'revoke-music-fixture'});await button('Refresh progress').click();
+  await expect(page.getByRole('status')).toContainText('Selected chat/profile/connection changed');
+  check('server Music denial clears rows/audio/Blob/draft with unchanged host atoms',
+    await page.getByRole('heading',{name:args.direction,exact:true}).count()===0&&await page.locator('audio').count()===0&&await page.getByLabel('Change for another take').count()===0);
+  check('native storage contains no private Music text/media',await page.evaluate(()=>localStorage.length===0));
+  check('native UI never sends prepare/start itself',(await page.evaluate(()=>window.fixtureRequests)).every(r=>!r.method.endsWith('.prepare')&&!r.method.endsWith('.start')));
+  check('no browser page errors',errors.length===0);
+  console.log(JSON.stringify({kind:'SOURCE/OFFLINE Music; packaged native ports + deterministic child/bridge. No ACE or perceptual review.',checks,page_errors:errors.length},null,2));
+  await context.close();
+}finally{
+  await browser.close();bridge.stdin.end();const exit=await closed;
+  fs.rmSync(temp,{recursive:true,force:true});assert.equal(exit,0);assert.equal(stderr,'');
+}

@@ -1,0 +1,29 @@
+Tool version: 2.4.
+Operation: sfx.
+Audio format: stereo-44100-pcm16.
+Argument 1 uses --description for direction.
+Argument 2 uses --length for seconds.
+Argument 3 uses --seed-value for seed.
+Argument 4 uses --destination for output.
+Argument 5 uses --manifest for receipt.
+Receipt output field: file.
+Receipt direction field: description.
+Receipt seconds field: length.
+Receipt seed field: seed_value.
+Receipt version field: version.
+Output destination: local-workspace.
+Network access: none.
+Operation cost: zero.
+Model use: none.
+Credential use: none.
+Permitted use: noncommercial_local_technical_evaluation.
+Execution: synchronous-no-detach.
+Exit semantics: zero-success-nonzero-failure.
+Stop semantics: process-group-term-kill.
+Replay policy: no-replay.
+Deadline seconds: 3.
+Minimum duration: 0.1.
+Maximum duration: 2.0.
+Default duration: 0.1.
+Default seed: 7.
+Audio output is the originally allocated WAV and flat JSON receipt pair.

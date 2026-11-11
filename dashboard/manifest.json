@@ -1,9 +1,10 @@
 {
   "name": "motion-studio",
-  "label": "Motion Studio",
-  "description": "Authenticated backend for the native Hermes Studio dock and composition timeline. No standalone dashboard editor.",
-  "version": "0.2.0",
-  "tab": {"hidden": true},
-  "entry": null,
+  "label": "Motion Studio status",
+  "description": "Metadata only. Open Hermes Desktop for Quick Create and Production, retained-media review and scoped import/export; runtime admission is separate.",
+  "version": "0.1.0",
+  "icon": "Film",
+  "tab": {"path": "/motion-studio", "hidden": true},
+  "entry": "dist/index.js",
   "api": "plugin_api.py"
 }

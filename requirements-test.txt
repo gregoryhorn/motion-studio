@@ -1,4 +1,0 @@
-# Development/test runner only; not a Motion Studio runtime dependency.
-pytest==9.0.2
-# Skill metadata generation and source parity checks only; never a runtime dependency.
-PyYAML==6.0.3

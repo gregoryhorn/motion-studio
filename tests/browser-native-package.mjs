@@ -1,0 +1,88 @@
+// Offline native package DOM/reload check: no HTTP listener or real host/model.
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import {spawn,execFileSync} from 'node:child_process';
+import {createInterface} from 'node:readline';
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url),{chromium}=require(process.env.PLAYWRIGHT_PACKAGE);
+const {expect}=require(path.join(process.env.PLAYWRIGHT_PACKAGE,'test.js'));
+const temp=fs.mkdtempSync(path.join(os.tmpdir(),'motion-native-dom-'));
+const bundle=process.env.NATIVE_BUNDLE||'dist/native/motion-studio-0.1.0-source.zip';
+execFileSync('python',['-m','zipfile','-e',bundle,temp]);
+execFileSync(process.env.ESBUILD,['tests/native-browser-fixture.js','--bundle','--format=iife','--platform=browser','--log-level=error',
+  '--alias:motion-studio-package='+path.join(temp,'motion-studio/desktop/plugin.js'),
+  '--alias:@hermes/plugin-sdk='+path.resolve('tests/native-sdk-browser.js'),'--outfile='+path.join(temp,'fixture.js')]);
+const bridge=spawn('python',['-m','tests.native_package_fixture'],{stdio:['pipe','pipe','pipe'],
+  env:Object.fromEntries(['PATH','TMPDIR','HERMES_SOURCE','NATIVE_BUNDLE'].filter(k=>process.env[k]).map(k=>[k,process.env[k]]))});
+let sequence=0,stderr='';const waiting=new Map();bridge.stderr.on('data',chunk=>{stderr+=chunk;});
+const closed=new Promise(resolve=>bridge.once('exit',code=>{for(const entry of waiting.values())entry.reject(Error('Fixture exited'));resolve(code);}));
+createInterface({input:bridge.stdout}).on('line',line=>{const value=JSON.parse(line),entry=waiting.get(value.id);waiting.delete(value.id);
+  if(value.error)entry.reject(Error(value.error));else entry.resolve(value.result);});
+const rpc=message=>new Promise((resolve,reject)=>{const id=++sequence;waiting.set(id,{resolve,reject});bridge.stdin.write(JSON.stringify({id,...message})+'\n');});
+const browser=await chromium.launch({executablePath:process.env.CHROME_EXECUTABLE,headless:true,args:['--no-sandbox']});
+const checks=[],errors=[];const check=(name,value)=>{assert.ok(value,name);checks.push(name);};
+try{
+  const context=await browser.newContext({serviceWorkers:'block',offline:true});
+  await context.exposeBinding('nativeRPC',(_source,message)=>rpc(message));
+  const html='<html><body><div id="root"></div><script>'+fs.readFileSync(path.join(temp,'fixture.js'),'utf8').replaceAll('</script','<\\/script')+'</script></body></html>';
+  await context.route('**/*',route=>route.request().url()==='https://motion.invalid/'?route.fulfill({contentType:'text/html',body:html}):route.abort());
+  const page=await context.newPage();page.on('pageerror',()=>errors.push('PAGE_ERROR'));
+  await page.goto('https://motion.invalid/');
+  await page.getByRole('button',{name:'Technical proposals',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'Motion Studio',exact:true})).toBeVisible();
+  const contributions=await page.evaluate(()=>window.fixtureContributions);
+  check('native route and sidebar use separate supported contributions',contributions.length===2&&contributions.some(c=>c.label==='Motion Studio'));
+  check('import/register/render do not access model/store',(await rpc({op:'counts'})).state_created===false);
+  await page.getByRole('button',{name:'Open / reconcile saved technical work',exact:true}).click();
+  await expect(page.getByRole('status')).toContainText('Public technical access is unconfigured');
+  check('default open refused without state/model work',(await rpc({op:'counts'})).model_calls===0&&!(await rpc({op:'counts'})).state_created);
+  await expect(page.getByRole('button',{name:'Prepare disabled proposal',exact:true})).toBeDisabled();
+  await rpc({op:'admit-fixture'});
+  await page.getByRole('button',{name:'Open / reconcile saved technical work',exact:true}).click();
+  await expect(page.getByRole('status')).toContainText('Public technical records opened');
+  const docs=await rpc({op:'docs'}),source=docs.sources[0];
+  await page.getByLabel('Public provenance 1',{exact:true}).fill(source.source);
+  await page.getByLabel('Documented version 1',{exact:true}).fill(source.version);
+  await page.getByLabel('Technical excerpts 1',{exact:true}).fill(source.excerpts.map(e=>e.text).join('\n'));
+  await page.getByRole('button',{name:'Save selected technical evidence',exact:true}).click();
+  await expect(page.getByRole('status')).toContainText('Technical evidence revision saved');
+  check('selection/status are inert',(await rpc({op:'counts'})).model_calls===0);
+  await page.evaluate(()=>{window.fixtureLoseAck=true;});
+  await page.getByRole('button',{name:'Prepare disabled proposal',exact:true}).click();
+  await expect(page.getByRole('status')).toContainText('response unobserved');
+  check('fake invocation entered once',(await rpc({op:'entered'})).entered);
+  const pointer=await page.evaluate(()=>Object.entries(localStorage).filter(([key])=>key.includes('technical-command:')));
+  check('only scoped opaque command is persisted before lost acknowledgement',pointer.length===1&&/^[a-f0-9]{32}$/.test(JSON.parse(pointer[0][1]).command)&&Object.keys(JSON.parse(pointer[0][1])).length===1);
+  await expect(page.getByText(/^Saved job /)).toHaveCount(0);
+  check('no job ID reached original view',true);
+  await page.reload();
+  await page.getByRole('button',{name:'Technical proposals',exact:true}).click();
+  await page.getByRole('button',{name:'Open / reconcile saved technical work',exact:true}).click();
+  await expect(page.getByText(/^Saved job /)).toBeVisible();
+  const jobText=await page.getByText(/^Saved job /).textContent();
+  const counts=await rpc({op:'counts'});
+  check('actual page reload recovered lost-ack job with one dispatch and one fake call',counts.model_calls===1&&counts.prepare_dispatches===1);
+  const reads=await page.evaluate(()=>window.fixtureRequests);
+  check('reloaded view reconciles SAME saved command, never reissues Prepare',reads.some(r=>r.payload.command===JSON.parse(pointer[0][1]).command)&&!reads.some(r=>r.method.endsWith('.prepare')));
+  await expect(page.getByRole('button',{name:'Prepare disabled proposal',exact:true})).toBeDisabled();
+  check('provider settlement observed in fake port',(await rpc({op:'release'})).settled);
+  await page.getByRole('button',{name:'Check saved work',exact:true}).click();
+  await expect(page.getByRole('status')).toContainText('Proposal ready');
+  check('same job retained after late result',(await page.getByText(/^Saved job /).textContent())===jobText);
+  await page.getByText('Disabled proposal and evidence details',{exact:true}).click();
+  await expect(page.locator('pre')).toContainText('"enabled": false');
+  await expect(page.locator('pre')).toContainText('"qualified": false');
+  check('validated disabled result, not mock creation output',true);
+  check('terminal observation clears only opaque pointer',(await page.evaluate(()=>Object.keys(localStorage).filter(k=>k.includes('technical-command:')).length))===0);
+  await page.evaluate(()=>window.fixtureUnload());
+  await expect(page.getByRole('heading',{name:'Motion Studio',exact:true})).toHaveCount(0);
+  check('unload is inert and no replay occurred',(await rpc({op:'counts'})).prepare_dispatches===1&&(await rpc({op:'counts'})).model_calls===1);
+  check('no page errors',errors.length===0);
+  console.log(JSON.stringify({kind:'Offline actual built ESM + React DOM + packaged Python with fake SDK/model; not installed Desktop.',checks,model_calls:1,prepare_dispatches:1,page_errors:errors.length},null,2));
+  await context.close();
+}finally{
+  await browser.close();bridge.stdin.end();const exit=await closed;
+  fs.rmSync(temp,{recursive:true,force:true});assert.equal(exit,0);assert.equal(stderr,'');
+}

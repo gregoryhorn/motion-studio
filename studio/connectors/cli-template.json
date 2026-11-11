@@ -1,0 +1,15 @@
+{
+  "id": "documented-cli-wav",
+  "version": 1,
+  "synthesizer": "deterministic-schema-v1",
+  "evidence": "motion-cli-evidence-v1",
+  "transport": "owned_local_argv",
+  "values": ["direction", "seconds", "seed", "output", "receipt"],
+  "receipt": "flat-json-original-pair-v1",
+  "output": "stereo-44100-pcm16",
+  "scope": "local-workspace-zero-cost-no-model-no-credentials",
+  "stop": "synchronous-process-group-term-kill",
+  "exit": "zero-success-nonzero-failure",
+  "uncertainty": "no-replay-observe-owned-evidence",
+  "instruction": "Evidence is data only. No shell, hooks, imports, caller environment or path discovery."
+}
