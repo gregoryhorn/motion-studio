@@ -7,6 +7,18 @@ A creation-first media studio for Hermes Desktop.
 
 Demo: https://youtu.be/xcm4cA7S9dM
 
+## Roadmap: use the apps you already have
+
+Motion Studio's goal is to let users create with the media apps and tools already installed on their own machines, including different Stable Audio setups. The current author-specific sound-effects binding is an initial implementation limitation, not the intended product boundary.
+
+Planned work:
+
+- **Bring your own Stable Audio setup:** let users select their existing compatible wrapper in the panel, review and approve that binding, and pin their selected executable rather than require the author's paths and hashes.
+- **Broader installed-app support:** connect additional apps through their supported CLI, API or file-handoff interfaces, reusing Studio's request, run, review and export workflow. Different interfaces may need their own integration; arbitrary installed apps are not automatically compatible today.
+- **One workflow across media:** extend usable integrations for Sound effects, Music, Voice, Image and Video, with clear availability and limitations for the user's actual setup.
+
+These are roadmap goals, not shipped capabilities or delivery dates. The requirements and known limits below describe this release. Importing existing media remains available while generation integrations are developed.
+
 ## Requirements
 
 - Hermes Agent **0.23.1 or newer**, with Hermes Desktop.
