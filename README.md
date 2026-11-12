@@ -11,11 +11,15 @@ Demo: https://youtu.be/xcm4cA7S9dM
 
 Motion Studio's goal is to let users create with the media apps and tools already installed on their own machines, including different Stable Audio setups. The current author-specific sound-effects binding is an initial implementation limitation, not the intended product boundary.
 
-Planned work:
+Planned sequence:
 
-- **Bring your own Stable Audio setup:** let users select their existing compatible wrapper in the panel, review and approve that binding, and pin their selected executable rather than require the author's paths and hashes.
-- **Broader installed-app support:** connect additional apps through their supported CLI, API or file-handoff interfaces, reusing Studio's request, run, review and export workflow. Different interfaces may need their own integration; arbitrary installed apps are not automatically compatible today.
-- **One workflow across media:** extend usable integrations for Sound effects, Music, Voice, Image and Video, with clear availability and limitations for the user's actual setup.
+1. **Bring your own Stable Audio setup:** let users select their existing compatible wrapper in the panel, review and approve that binding, and pin the selected executable to their own installation.
+2. **Integrate [Crystal Ball](https://gregoryhorn.github.io/crystal-ball/):** use the user's configured installation for media analysis and review. Start by checking a selected take, showing findings and skipped checks, and preserving its report association after reopening. Extend to footage search, transcription, visible-text reading, beat/shot analysis and timing suggestions. Supported loudness/true-peak fixes create a separate derivative that is checked again; automated checks remain separate from creative approval.
+3. **Template-driven installed-app connections:** connect additional apps through documented CLI, API, Hermes-callable or file-handoff interfaces, reusing Studio's request, run, review and export workflow. Use portable Stable Audio and Crystal Ball integrations to inform the shared mechanism. Users should not need to write adapter code, shell commands or workflow JSON; arbitrary installed apps are not automatically compatible today.
+4. **One Production workflow across media:** extend usable integrations for Sound effects, Music, Voice, Image and Video, with shared references, variations, comparison and applicable Crystal Ball analysis. Show availability and limitations for the user's actual setup.
+5. **Unfamiliar-tool learning and delivery:** add evidence-backed tool research, reusable technical knowledge with correction/forget controls, and verified external-editor handoffs.
+
+The intended Crystal Ball workflow is: create or import a take → analyse → inspect findings → refine with the appropriate tool → recheck → choose and export. Reuse its existing Hermes tool or supported CLI where available. Its presence in another profile does not establish cross-profile access or an installed Motion Studio integration.
 
 These are roadmap goals, not shipped capabilities or delivery dates. The requirements and known limits below describe this release. Importing existing media remains available while generation integrations are developed.
 
