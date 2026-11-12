@@ -11,7 +11,7 @@ Demo: https://youtu.be/xcm4cA7S9dM
 
 - Hermes Agent **0.23.1 or newer**, with Hermes Desktop.
 - **Image, voice and video** use Hermes' own `image_gen`, `tts` and `video_gen` tools. Enable the ones you want and configure their provider in Hermes. Paid or unknown-cost methods ask before running.
-- **Sound effects** use a local audio producer that you configure. This package doesn't ship models or install engines.
+- **Sound effects generation is unavailable outside the author's existing Stable Audio setup.** Its wrapper, Python runtime and `audio.py` script are pinned to that installation's paths and SHA256 digests; this release cannot configure another user's producer. Imported sound effects can still be reviewed and exported. This package doesn't ship models or install engines.
 - **FFmpeg / ffprobe** on `PATH`, used to check imported and generated media.
 - Tested on Linux and Windows Hermes Desktop. macOS has not been tested.
 
@@ -29,6 +29,7 @@ The plugin registers two agent tools, `motion_studio_creation` and `motion_studi
 
 ## Security and privacy
 
+- **Method listing** reads generator settings from the active Hermes profile. API-key presence is checked through Hermes' scoped `get_secret()` API; OAuth entries report configuration only. Studio never reads Hermes' `auth.json` or token store.
 - **Child processes** (ffmpeg/ffprobe, `nvidia-smi`, local audio engines) get a minimal fixed environment from `studio/child_env.py`, with a small allowlist per adapter. They never inherit provider keys, proxy settings or other credentials.
 - **Imports** take uploaded bytes, not file paths. Output collection reads only Hermes' generator output folders. It refuses hidden or secret files (`.env`, `auth.json`, `~/.ssh`, …) and symlinks.
 - **Downloads** fetch only from the provider URLs that Hermes' tools return (x.ai, openai.com, oaiusercontent.com, fal.media, fal.run, deepinfra.com, krea.ai). They use same-host redirects only, with no proxies, cookies or credentials.

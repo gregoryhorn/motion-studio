@@ -22,6 +22,9 @@ class MethodsTests(unittest.TestCase):
         defaults.write_text("DEFAULT_CONFIG = {'tts': {'provider': 'edge', 'edge': {}, "
                             "'openai': {}, 'piper': {}, 'neutts': {}, 'kittentts': {}, 'streaming': {}}}")
         self.env = {}
+        self.secrets = {}
+        self.secret_lookup = self.enterContext(patch.object(methods, '_get_secret',
+            side_effect=lambda key: self.secrets.get(key)))
         self.config = {}
 
     def plugin(self, family, name, source=''):
@@ -55,12 +58,13 @@ class MethodsTests(unittest.TestCase):
         self.assertEqual(self.inventory()['Image']['default'], 'fal')
         self.assertEqual(self.inventory()['Voice']['default'], 'piper')
         self.config['image_gen']['provider'] = 'missing'
-        self.assertIsNone(self.inventory()['Image']['default'])
+        self.assertEqual(self.inventory()['Image']['default'], 'missing')
+        self.assertFalse(self.option(self.inventory(), 'Image', 'missing')['available'])
 
-    def test_environment_profile_selection(self):
+    def test_context_profile_selection(self):
         self.config = {'tts': {'provider': 'openai'}}
         self.inventory()
-        with patch.dict('os.environ', {'HERMES_HOME': str(self.home)}, clear=True):
+        with patch.object(methods, '_profile_home', return_value=self.home):
             result = methods.list_methods(provider_root=self.root, desktop_root=self.desktop)
         self.assertEqual(result['kinds']['Voice']['default'], 'openai')
 
@@ -81,7 +85,7 @@ class MethodsTests(unittest.TestCase):
     def test_no_secret_values_or_paths_and_new_provider_key(self):
         secret = 'CANARY-SECRET-DO-NOT-RETURN-123'
         self.plugin('image_gen', 'future', "key = get_secret('FUTURE_API_KEY')")
-        self.env = {'FUTURE_API_KEY': secret}
+        self.secrets = {'FUTURE_API_KEY': secret}
         self.config = {'image_gen': {'future': {'api_key': secret, 'base_url': 'https://private.invalid'}}}
         result = self.inventory()
         self.assertTrue(self.option(result, 'Image', 'future')['available'])
@@ -91,19 +95,73 @@ class MethodsTests(unittest.TestCase):
 
     def test_profile_disabled_even_with_credential(self):
         self.plugin('image_gen', 'fal')
-        self.env = {'FAL_KEY': 'secret'}
+        self.secrets = {'FAL_KEY': 'secret'}
         self.config = {'plugins': {'entries': {'fal': {'enabled': False}}}}
         option = self.option(self.inventory(), 'Image', 'fal')
         self.assertFalse(option['available'])
         self.assertEqual(option['reason'], 'Not enabled in this profile')
 
-    def test_oauth_presence_without_resolution(self):
-        self.plugin('image_gen', 'openai-codex')
+    def test_oauth_configuration_without_reading_token_store(self):
+        for name in ('openai-codex', 'xai-oauth'):
+            self.plugin('image_gen', name)
         (self.home / 'auth.json').write_text(json.dumps({'providers': {
             'openai-codex': {'tokens': {'access_token': 'PRIVATE-OAUTH-CANARY'}}}}))
-        result = self.inventory()
-        self.assertTrue(self.option(result, 'Image', 'openai-codex')['available'])
-        self.assertNotIn('PRIVATE-OAUTH-CANARY', json.dumps(result))
+        original_read = Path.read_text
+        original_stat = Path.stat
+        def guarded_read(path, *args, **kwargs):
+            self.assertNotEqual(path.name, 'auth.json', 'Token store must never be read')
+            return original_read(path, *args, **kwargs)
+        def guarded_stat(path, *args, **kwargs):
+            self.assertNotEqual(path.name, 'auth.json', 'Token store must never be probed')
+            return original_stat(path, *args, **kwargs)
+        with patch.object(Path, 'read_text', guarded_read), patch.object(Path, 'stat', guarded_stat):
+            result = self.inventory()
+            self.assertFalse(self.option(result, 'Image', 'openai-codex')['available'])
+            for kind, section in (('Image', 'image_gen'), ('Video', 'video_gen'), ('Voice', 'tts')):
+                for name in ('openai-codex', 'xai-oauth', 'xai'):
+                    self.config = {section: {'provider': name}}
+                    result = self.inventory()
+                    option = self.option(result, kind, name)
+                    self.assertTrue(option['available'])
+                    self.assertIn('Configured in this profile', option['note'])
+                    self.assertFalse(option['observed_ready'])
+                    self.assertEqual(option['evidence_scope'], 'profile-configuration-only')
+                    self.assertNotIn('PRIVATE-OAUTH-CANARY', json.dumps(result))
+
+    def test_environment_keys_do_not_override_secret_scope(self):
+        self.plugin('image_gen', 'fal')
+        self.config = {'image_gen': {'provider': 'fal'}}
+        self.env = {'FAL_KEY': 'INJECTED-KEY'}
+        with patch.dict('os.environ', {'FAL_KEY': 'PROCESS-KEY'}):
+            self.assertFalse(self.option(self.inventory(), 'Image', 'fal')['available'])
+        self.secrets = {'FAL_KEY': 'PROFILE-KEY'}
+        self.assertTrue(self.option(self.inventory(), 'Image', 'fal')['available'])
+        self.secret_lookup.assert_any_call('FAL_KEY')
+
+    def test_disabled_oauth_stays_disabled(self):
+        self.config = {'image_gen': {'provider': 'openai-codex'},
+                       'plugins': {'entries': {'openai-codex': {'enabled': False}}}}
+        option = self.option(self.inventory(), 'Image', 'openai-codex')
+        self.assertFalse(option['available'])
+        self.assertEqual(option['reason'], 'Not enabled in this profile')
+
+    def test_xai_scoped_key_is_distinct_from_configured_oauth(self):
+        self.config = {'image_gen': {'provider': 'xai'}}
+        self.secrets = {'XAI_API_KEY': 'PROFILE-KEY'}
+        option = self.option(self.inventory(), 'Image', 'xai')
+        self.secret_lookup.assert_any_call('XAI_API_KEY')
+        self.assertTrue(option['available'])
+        self.assertTrue(option['observed_ready'])
+        self.assertEqual(option['evidence_scope'], 'passive-presence-only')
+
+    def test_scope_errors_do_not_fall_back_to_process_keys(self):
+        self.plugin('image_gen', 'fal')
+        with patch.dict('os.environ', {'FAL_KEY': 'PROCESS-KEY'}), \
+                patch.object(methods, '_get_secret', side_effect=RuntimeError('scope unavailable')):
+            with self.assertRaisesRegex(RuntimeError, 'scope unavailable'):
+                self.inventory()
+            with patch.object(methods, '_profile_home', return_value=self.home):
+                self.assertEqual(methods.rpc_list({}), {'error': 'METHODS_UNAVAILABLE'})
 
     def test_sfx_and_music_plugin_discovery(self):
         self.plugin('music_gen', 'elevenlabs')
@@ -111,7 +169,7 @@ class MethodsTests(unittest.TestCase):
         folder = self.desktop / 'elevenlabs-sound-effects'
         folder.mkdir(parents=True)
         (folder / 'plugin.js').touch()
-        self.env = {'ELEVENLABS_API_KEY': 'secret'}
+        self.secrets = {'ELEVENLABS_API_KEY': 'secret'}
         result = self.inventory()
         self.assertTrue(self.option(result, 'Sound effects', 'elevenlabs')['available'])
         self.assertTrue(self.option(result, 'Music', 'elevenlabs')['available'])
@@ -121,7 +179,7 @@ class MethodsTests(unittest.TestCase):
         folder = self.root.parent / 'plugins' / 'future-music'
         folder.mkdir(parents=True)
         (folder / 'plugin.yaml').write_text("provides_tools: [future_music]\nrequires_env: [{name: FUTURE_API_KEY}]")
-        self.env = {'FUTURE_API_KEY': 'secret'}
+        self.secrets = {'FUTURE_API_KEY': 'secret'}
         self.assertTrue(self.option(self.inventory(), 'Music', 'future-music')['available'])
 
     def test_editor_music_mixing_is_not_a_generator(self):
@@ -183,6 +241,49 @@ class MethodsTests(unittest.TestCase):
                 self.assertIsInstance(option['available'], bool)
                 if not option['available']:
                     self.assertTrue(option['reason'])
+
+
+class HostScopeIntegrationTests(unittest.TestCase):
+    def test_real_host_scope_controls_profile_and_key_presence(self):
+        try:
+            from agent import secret_scope
+            from hermes_constants import set_hermes_home_override, reset_hermes_home_override
+        except ImportError:
+            self.skipTest('Hermes host modules are not available in this standalone checkout')
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            profile_a, profile_b = base / 'a', base / 'b'
+            for home, provider in ((profile_a, 'fal'), (profile_b, 'openai')):
+                home.mkdir()
+                (home / 'config.yaml').write_text(yaml.safe_dump({'image_gen': {'provider': provider}}))
+            context = secret_scope.set_multiplex_context(True)
+            try:
+                with patch.dict('os.environ', {'FAL_KEY': 'PROCESS-CANARY', 'OPENAI_API_KEY': 'PROCESS-CANARY'}):
+                    for home, provider, secrets in ((profile_a, 'fal', {'FAL_KEY': 'SCOPED-CANARY'}),
+                                                     (profile_b, 'openai', {}),
+                                                     (profile_a, 'fal', {})):
+                        home_token = set_hermes_home_override(home)
+                        scope_token = secret_scope.set_secret_scope(secrets, profile_home=str(home))
+                        try:
+                            result = methods.list_methods(provider_root=base / 'absent', desktop_root=base / 'desktop')
+                            image = result['kinds']['Image']
+                            self.assertEqual(image['default'], provider)
+                            option = next(o for o in image['options'] if o['id'] == provider)
+                            self.assertEqual(option['available'], bool(secrets))
+                            self.assertNotIn('CANARY', json.dumps(result))
+                        finally:
+                            secret_scope.reset_secret_scope(scope_token)
+                            reset_hermes_home_override(home_token)
+                    home_token = set_hermes_home_override(profile_a)
+                    scope_token = secret_scope.set_secret_scope(None)
+                    try:
+                        with self.assertRaises(secret_scope.UnscopedSecretError):
+                            methods.list_methods(provider_root=base / 'absent', desktop_root=base / 'desktop')
+                    finally:
+                        secret_scope.reset_secret_scope(scope_token)
+                        reset_hermes_home_override(home_token)
+            finally:
+                secret_scope.reset_multiplex_context(context)
 
 
 if __name__ == '__main__':
