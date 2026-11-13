@@ -101,6 +101,8 @@ class Assets:
                                (row["take"], import_id, import_id, row["request"], row["revision"],
                                 row["digest"], row["size"], row["name"], canonical(facts),
                                 "Not reviewed", "user_import"))
+                    from ..director.review.reports import retained
+                    retained(self.store, db, row['take'], data)
                     db.execute("UPDATE imports SET status='Ready for review',error=NULL WHERE id=?", (import_id,))
                     return {"id": import_id, "take": row["take"], "status": "Ready for review"}
             except (Fault, OSError) as error:

@@ -5,7 +5,7 @@ const provenRejections=new Set(['SYNTHESIS_PACKET_TOO_LARGE','SYNTHESIS_UNAVAILA
 const technicalUnavailable=()=>new Error('TECHNICAL_PRIMARY_UNAVAILABLE');
 export async function openTechnical(host,onInvalidated=()=>{},options={}) {
   const methods=options.methods||technicalMethods,namespace=options.namespace||'technical';
-  const workspace=namespace==='creation'||namespace==='production';
+  const workspace=['creation','production','director'].includes(namespace);
   const unavailable=()=>workspace?Object.assign(new Error('WORKSPACE_PRIMARY_UNAVAILABLE'),
     {code:namespace.toUpperCase()+'_PRIMARY_UNAVAILABLE'}):technicalUnavailable();
   const keys=['focusedSessionId','focusedSessionOwner','connectionId','profile','gateway'];

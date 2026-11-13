@@ -7,21 +7,19 @@ A creation-first media studio for Hermes Desktop.
 
 Demo: https://youtu.be/xcm4cA7S9dM
 
-## Roadmap: use the apps you already have
+## New in 0.2: Director basics
 
-Motion Studio's goal is to let users create with the media apps and tools already installed on their own machines, including different Stable Audio setups. The current author-specific sound-effects binding is an initial implementation limitation, not the intended product boundary.
+- **Every take is checked.** [Crystal Ball](https://gregoryhorn.github.io/crystal-ball/) 1.2 installs with Motion Studio and checks each take and each export. Images, audio and video each get the checks that apply to them; anything that doesn't apply shows *Not checked* with a reason, never a false FAIL. A PASS is a technical floor, not creative approval.
+- **Works with the tools you have.** Motion Studio lists what your Hermes can reach and keeps a *tool card* for each one. For a tool it doesn't know yet, it can run one tiny, disclosed test (cost and wait shown first, you confirm once) and remembers what worked.
+- **Remove, Undo and Restore.** Takes can be removed from the list and brought back. Originals and history are never deleted.
 
-Planned sequence:
+## Roadmap
 
-1. **Bring your own Stable Audio setup:** let users select their existing compatible wrapper in the panel, review and approve that binding, and pin the selected executable to their own installation.
-2. **Integrate [Crystal Ball](https://gregoryhorn.github.io/crystal-ball/):** use the user's configured installation for media analysis and review. Start by checking a selected take, showing findings and skipped checks, and preserving its report association after reopening. Extend to footage search, transcription, visible-text reading, beat/shot analysis and timing suggestions. Supported loudness/true-peak fixes create a separate derivative that is checked again; automated checks remain separate from creative approval.
-3. **Template-driven installed-app connections:** connect additional apps through documented CLI, API, Hermes-callable or file-handoff interfaces, reusing Studio's request, run, review and export workflow. Use portable Stable Audio and Crystal Ball integrations to inform the shared mechanism. Users should not need to write adapter code, shell commands or workflow JSON; arbitrary installed apps are not automatically compatible today.
-4. **One Production workflow across media:** extend usable integrations for Sound effects, Music, Voice, Image and Video, with shared references, variations, comparison and applicable Crystal Ball analysis. Show availability and limitations for the user's actual setup.
-5. **Unfamiliar-tool learning and delivery:** add evidence-backed tool research, reusable technical knowledge with correction/forget controls, and verified external-editor handoffs.
+1. **Plan the video:** pick a video type, type one sentence; Motion Studio drafts the script and scene plan, and an independent critic reviews both before anything is generated.
+2. **Build it:** make each scene with your own tools, show time and cost first, then assemble one MP4 with captions in vertical, wide or square.
+3. **Polish:** guided setup, provider list with copy-paste setup, and a full Windows pass.
 
-The intended Crystal Ball workflow is: create or import a take → analyse → inspect findings → refine with the appropriate tool → recheck → choose and export. Reuse its existing Hermes tool or supported CLI where available. Its presence in another profile does not establish cross-profile access or an installed Motion Studio integration.
-
-These are roadmap goals, not shipped capabilities or delivery dates. The requirements and known limits below describe this release. Importing existing media remains available while generation integrations are developed.
+These are goals, not shipped features or dates.
 
 ## Requirements
 
@@ -29,6 +27,7 @@ These are roadmap goals, not shipped capabilities or delivery dates. The require
 - **Image, voice and video** use Hermes' own `image_gen`, `tts` and `video_gen` tools. Enable the ones you want and configure their provider in Hermes. Paid or unknown-cost methods ask before running.
 - **Sound effects generation is unavailable outside the author's existing Stable Audio setup.** Its wrapper, Python runtime and `audio.py` script are pinned to that installation's paths and SHA256 digests; this release cannot configure another user's producer. Imported sound effects can still be reviewed and exported. This package doesn't ship models or install engines.
 - **FFmpeg / ffprobe** on `PATH`, used to check imported and generated media.
+- **Crystal Ball 1.2** (installed automatically as a pinned dependency). Optional Hear/See engines are offered separately; without them those checks show *Not checked*.
 - Tested on Linux and Windows Hermes Desktop. macOS has not been tested.
 
 ## Install
@@ -41,7 +40,7 @@ Then reload Hermes Desktop. Open a chat in the profile you use for Motion Studio
 
 ## How it works
 
-The plugin registers two agent tools, `motion_studio_creation` and `motion_studio_production`, and 45 read-only skills. It registers no hooks. The agent prepares a request and calls the Hermes generator. Motion Studio then collects the result and saves it as a take you can review.
+The plugin registers three agent tools, `motion_studio_creation`, `motion_studio_production` and `motion_studio_tools`, and 45 read-only skills. It registers no hooks. The agent prepares a request and calls the Hermes generator. Motion Studio then collects the result and saves it as a take you can review.
 
 ## Security and privacy
 
@@ -57,7 +56,7 @@ Hermes' install-time security scan rates this package *caution*: it runs media t
 ## Known limits
 
 - Music generation is not available yet.
-- Saved takes and projects can't be deleted from the app yet.
+- Removing a take hides it from the list (with Undo/Restore); saved media is never deleted.
 - Some legacy craft skills from the earlier editor-first version are not ported yet.
 
 ## Development

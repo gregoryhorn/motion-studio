@@ -2,6 +2,7 @@
 import json
 import time
 from ...domain import Fault, opaque
+from ...director.state.projections import summary as director_summary, active as director_active
 from ...persistence.primitives import canonical
 
 
@@ -66,16 +67,19 @@ class ProductionRecords:
     def take(self, db, root, request, take):
         request_row = self.creations.authorize_request(db, root, request)
         row = self.store.take(db, take)
+        if not director_active(db, row):
+            raise Fault('DIRECTOR_TAKE_REMOVED', 409)
         if row['request'] != request:
             raise Fault('PRODUCTION_TAKE_SCOPE_MISMATCH', 403)
         return request_row, row
 
-    @staticmethod
-    def take_summary(row, selected=None):
+    def take_summary(self, row, selected=None):
+        with self.store.transaction() as db:
+            detail = director_summary(db, row)
         return dict(id=row['id'], request=row['request'], request_revision=row['revision'],
                     source_request_revision=row['revision'], artifact=row['artifact'],
                     review=row['review'], origin=row['origin'], digest=row['digest'],
-                    size=row['size'], facts=json.loads(row['facts']), selected=selected)
+                    size=row['size'], facts=json.loads(row['facts']), selected=selected, **detail)
 
     def rows(self, db, sql, parameters):
         return [dict(row) for row in db.execute(sql, parameters)]
@@ -129,6 +133,8 @@ class ProductionRecords:
         for item in rows:
             request = self.creations.authorize_request(db, root, item['request'])
             for take in db.execute('SELECT * FROM takes WHERE request=? ORDER BY rowid', (request['id'],)):
+                if not director_active(db, take):
+                    continue
                 summary = self.take_summary(take)
                 summary.update(direction=request['text'], kind=request['kind'])
                 result.append(summary)

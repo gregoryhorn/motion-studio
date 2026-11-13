@@ -1,5 +1,5 @@
 name: motion-studio
-version: 0.1.0
+version: 0.2.0
 description: Creation-first Quick Create and Production with retained media review, scoped import/export and agent tool-output collection; default-denied runtime admission.
 kind: standalone
 manifest_version: 2
@@ -8,7 +8,9 @@ python_dependencies:
   - pydantic>=2.14.1,<3
   - fastapi>=0.133.1,<1
   - PyYAML>=6.0.3,<7
+  - crystal-ball-media @ https://github.com/gregoryhorn/crystal-ball/releases/download/v1.2.0/crystal_ball_media-1.2.0-py3-none-any.whl#sha256=e36da1fe33fd91b3971297682840ee3e893a5d8e7465ee9158d4c632a4fe7338
 capabilities: []
 provides_tools:
   - motion_studio_creation
   - motion_studio_production
+  - motion_studio_tools

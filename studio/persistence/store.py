@@ -39,6 +39,10 @@ class Store:
             CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY, csrf TEXT,
                 expires REAL);
             """)
+            from ..director.review.reports import initialize
+            from ..director.state.removal import initialize as initialize_removal
+            initialize(db)
+            initialize_removal(db)
         os.chmod(self.database, 0o600)
 
     @contextlib.contextmanager
@@ -100,11 +104,16 @@ class Store:
         with self.transaction() as db:
             requests = [dict(r) for r in db.execute("SELECT * FROM requests ORDER BY created DESC")]
             takes = [dict(r) for r in db.execute("SELECT * FROM takes ORDER BY rowid DESC")]
+            from ..director.state.removal import visible
+            from ..director.review.reports import status
+            takes = [take for take in takes if visible(db, take['id'])]
+            for take in takes:
+                take['check'] = status(db, take)
             imports = [dict(r) for r in db.execute("SELECT * FROM imports ORDER BY rowid DESC")]
         for take in takes:
             take["facts"] = json.loads(take["facts"])
             take["rights"] = "Usage rights not verified"
-            take["technical"] = "Technical check passed"
+            take["technical"] = 'Crystal Ball: ' + take['check']['status']
         return dict(requests=requests, takes=takes, imports=imports)
 
     def take(self, db, take):
@@ -126,6 +135,9 @@ class Store:
             def operation():
                 row = self.request(db, model.request, model.expected)
                 take = self.take(db, model.take)
+                from ..director.state.removal import visible
+                if not visible(db, model.take):
+                    raise Fault('DIRECTOR_TAKE_REMOVED', 409)
                 if take["request"] != model.request:
                     raise Fault("TAKE_SCOPE_MISMATCH", 403)
                 revision = row["revision"] + 1

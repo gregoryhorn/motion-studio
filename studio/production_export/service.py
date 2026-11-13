@@ -139,7 +139,14 @@ class ProductionExport:
         facts = dict(stored)
         if pin['format'] == 'wav':
             facts.update(inspect_wav(data))
-        return data, entry(pin, facts)
+        from ..director.review.reports import check as check_take
+        with self.productions.store.transaction() as db:
+            coverage = check_take(db, row, data)
+        item = entry(pin, facts)
+        item['crystal_ball'] = coverage
+        item['your_review'] = row['review']
+        item['delivery_approval'] = 'Not granted by automated checks'
+        return data, item
 
     @staticmethod
     def _write(archive, name, data, check):

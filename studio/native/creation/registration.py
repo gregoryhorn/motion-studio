@@ -252,6 +252,8 @@ def register(ctx, *, association=None):
             return dict(error='INVALID_METHODS_INPUT')
         return rpc_list(params, **context)
     ctx.register_rpc('creation.methods', methods_rpc)  # read-only method/cost discovery for the composer
+    from ...director.registration import register as register_director
+    runtime.director = register_director(ctx, runtime)
     return runtime
 
 

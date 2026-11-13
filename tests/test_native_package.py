@@ -101,7 +101,9 @@ class PackageTests(unittest.TestCase):
             } | {'methods.list'} | {'creation.'+op for op in ('admit','admit_music','prepare','start','status','stop','chunk','select','review','list','collect_output','methods')
             } | {'production.'+op for op in ('list','open','admit','create','update_brief','add_asset','update_asset',
                                            'add_reference','update_reference','link_take','select_take','chunk')}
-              | {'production.' + op for op in MEDIA_OPERATIONS})
+              | {'production.' + op for op in MEDIA_OPERATIONS}
+              | {'director.' + op for op in ('inventory','card.read','card.prepare','card.test',
+                  'card.evidence','card.disable','card.forget','check','status','report','take.remove','take.restore','take.removed')})
             self.assertEqual(self.rpc('status')['error'], 'TECHNICAL_ACCESS_UNAVAILABLE')
             self.assertEqual(self.rpc('status', {'authorized':True})['error'], 'TECHNICAL_OPERATION_UNAVAILABLE')
             runtime.unload(); runtime.unload()

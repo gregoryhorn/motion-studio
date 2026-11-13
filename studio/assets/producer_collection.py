@@ -85,6 +85,8 @@ class ProducerCollection:
                             row['plan']['revision'], manifest['digest'], len(data),
                             'Test-only ' + adapter.describe()['name'] if row['fixture'] else adapter.describe()['name'],
                             canonical(facts), 'Not reviewed', 'test_fixture' if row['fixture'] else 'producer_output'))
+                from ..director.review.reports import retained
+                retained(self.store, db, row['candidate'], data)
                 db.execute("UPDATE local_runs SET status='Ready for review',error=NULL WHERE id=?", (run,))
             return self.runs.public(run)
         except (Fault, OSError) as error:

@@ -10,6 +10,7 @@ from ...assets.retention import Assets
 from ...native.creation import music, hermes
 from ...producer.music.contract import OPERATION
 from ...media_import.contracts import describe_take
+from ...director.state.projections import summary as director_summary, active as director_active
 
 
 class Creations:
@@ -196,8 +197,8 @@ class Creations:
                           certainty='External execution unobserved', effect_review=False,
                           preparation_retryable=False, next_action='Collect the same tool output with the saved submission and attempt IDs. Never regenerate to recover a lost reply.')
             result['takes'] = [dict(id=t['id'], size=t['size'], review=t['review'], origin=t['origin'],
-                descriptor=describe_take(t, kind=kind), facts=json.loads(t['facts']),
-                selected=snapshot['selected'] == t['id']) for t in db.execute('SELECT * FROM takes WHERE request=?', (request,))]
+                descriptor=describe_take(t, kind=kind), facts=json.loads(t['facts']), **director_summary(db, t),
+                selected=snapshot['selected'] == t['id']) for t in db.execute('SELECT * FROM takes WHERE request=?', (request,)) if director_active(db, t)]
             if json.loads(row['input']).get('method') == 'import':
                 result.update(method='import', state='Awaiting import',
                               next_action='Import an existing file; this request never generates.')
@@ -243,9 +244,9 @@ class Creations:
                 result['recovery'] = {
                     key:recovery.get(key) for key in ('state','next_action','successor','last_result','reserved')}
             result['takes'] = [dict(id=t['id'], size=t['size'], review=t['review'], origin=t['origin'],
-                descriptor=describe_take(t, kind=kind), facts=json.loads(t['facts']),
+                descriptor=describe_take(t, kind=kind), facts=json.loads(t['facts']), **director_summary(db, t),
                                    selected=snapshot['selected'] == t['id'])
-                               for t in db.execute('SELECT * FROM takes WHERE request=?', (request,))]
+                               for t in db.execute('SELECT * FROM takes WHERE request=?', (request,)) if director_active(db, t)]
         return result
 
     def prelaunch(self, db, row, scope):

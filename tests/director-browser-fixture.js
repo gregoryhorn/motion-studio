@@ -1,0 +1,18 @@
+import {createRoot} from 'react-dom/client';
+import {createElement as h} from 'react';
+import {DirectorPage} from '../studio/native/frontend/director-page.js';
+import {DirectorController} from '../studio/native/frontend/director-controller.js';
+import {TakeChecks} from '../studio/native/frontend/director-take.js';
+import {host} from './native-sdk-browser.js';
+window.fixtureRequests=[];window.fixtureObservedCreationIds=[];
+window.directorHost=host;
+const request=host.request.bind(host);
+host.request=async(method,payload)=>{const value=await request(method,payload);
+  if(window.directorLoseTestAck&&method.endsWith('.card.test'))throw Error('CONTROLLED_LOST_TEST_ACK');return value;};
+let controller;
+const createController=notify=>(controller=new DirectorController(host,notify));
+const root=createRoot(document.querySelector('#root'));
+window.directorMount=()=>root.render(h(DirectorPage,{createController,onBack:()=>{}}));
+window.directorTake=take=>root.render(h(TakeChecks,{host,request:take.request,take:{...take,id:take.take},onChanged:()=>{}}));
+window.directorUnmount=()=>{root.render(null);controller?.dispose();};
+window.directorMount();

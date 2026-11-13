@@ -85,12 +85,18 @@ PYTHON = ('studio/domain.py', 'studio/persistence/primitives.py', 'studio/connec
     'studio/producer/music/entry.py', 'studio/producer/music/runner.py', 'studio/producer/music/pins.py',
     'studio/child_env.py', 'studio/media_import/__init__.py', 'studio/media_import/contracts.py', 'studio/media_import/containers.py',
     'studio/media_import/operations.py', 'studio/media_import/service.py', 'studio/media_import/validation.py',
-    'studio/production_export/__init__.py', 'studio/production_export/manifest.py', 'studio/production_export/service.py')
+    'studio/production_export/__init__.py', 'studio/production_export/manifest.py', 'studio/production_export/service.py',
+    'studio/director/registration.py', 'studio/director/process.py',
+    'studio/director/cards/inventory.py', 'studio/director/cards/evidence.py', 'studio/director/cards/schema.py', 'studio/director/cards/learning.py',
+    'studio/director/review/crystal_ball.py', 'studio/director/review/reports.py',
+    'studio/director/review/applicability.py',
+    'studio/director/state/repository.py', 'studio/director/state/removal.py', 'studio/director/state/projections.py')
 STATIC = ('plugin.yaml', '__init__.py', 'README.md', 'LICENSE', 'dashboard/manifest.json', 'dashboard/dist/index.js', 'dashboard/plugin_api.py')
 FRONTEND = tuple('studio/native/frontend/'+name+'.js' for name in ('entry', 'transport', 'controller', 'page',
     'creation-controller', 'creation-page', 'creation-style', 'workspace-copy', 'retained-bytes', 'production-controller', 'production-page', 'production-style', 'production-plan',
     'comparison-controller', 'production-comparison', 'production-review', 'media-review', 'media-review-controller',
-    'media-review-style', 'production-export', 'production-export-controller', 'help', 'methods-ui'))
+    'media-review-style', 'production-export', 'production-export-controller', 'help', 'methods-ui',
+    'director-controller', 'director-page', 'director-take'))
 PINS = {
  'engineering/native-ui-remote-primary-addendum-r1.md':'6b523a1ded1781057bbdc889e0838aeee20e5122e86eead1b211247a0fce338f',
  'engineering/music-ace-step-preflight-r1.md':'74ec54370c4afaf5c7aaf828e4d0f4c9c11ad3cee0979edf668574abb67f6a8a',

@@ -126,7 +126,7 @@ function useDrafts(){
     kindDraft,setKindDraft,intentDraft,setIntentDraft,sectionDraft,setSectionDraft,helpOpen,setHelpOpen};
 }
 
-export function ProductionPage({createController,onQuickCreate}){
+export function ProductionPage({createController,onQuickCreate,onTools}){
   const controller=useRef(null),audio=useRef(null),[state,setState]=useState(null),[notice,setNotice]=useState(null),d=useDrafts();
   useEffect(()=>{const current=createController(setState);controller.current=current;setState({...current.state});
     void current.open();return()=>{audio.current?.pause();current.dispose();controller.current=null;};},[createController]);
@@ -187,7 +187,7 @@ export function ProductionPage({createController,onQuickCreate}){
     section==='Outputs'?h(OutputsPanel,{state,assets,controller}):
     h(ProductionReview,{state,asset,take,button,identity,audio,controller:controller.current,onRefine:refine});
   return h('section',{className:'ms production-shell','aria-label':'Production workspace'},h('style',null,productionStyles),
-    h('div',{className:'ms-inner'},h(MotionHeader,{active:'production',onCreate:onQuickCreate,onProduction:()=>{},status:plainStatus(state.status),
+    h('div',{className:'ms-inner'},h(MotionHeader,{active:'production',onCreate:onQuickCreate,onProduction:()=>{},onTools,status:plainStatus(state.status),
         helpOpen:d.helpOpen,onHelp:()=>d.setHelpOpen(!d.helpOpen)}),
       h(HelpPanel,{open:d.helpOpen,onClose:()=>d.setHelpOpen(false),title:'Production',guide:PRODUCTION_HELP.guide}),
       state.needsConnection||state.connectionStatus?h('div',{className:'ms-notice','aria-label':'Chat connection'},

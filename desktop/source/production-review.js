@@ -3,6 +3,7 @@ import {Button} from '@hermes/plugin-sdk';
 import {MediaReview} from './media-review.js';
 import {createImportedReviewReader,createRetainedReviewReader} from './media-review-controller.js';
 import {ProductionComparison} from './production-comparison.js';
+import {TakeChecks} from './director-take.js';
 import {MethodPicker,chosenMethod} from './methods-ui.js';
 
 const NOTES={Video:'Cost depends on the selected method and account. Unknown cost is not free; review any spend before sending.',Music:'Local music generation is not qualified yet. You can import a track below.'};
@@ -149,6 +150,7 @@ export function ProductionReview({state,asset,take,button,identity,audio,control
       h('span',{className:'production-take-state','data-on':String(chosen)},'Take '+two(index+1)+(chosen?' - Selected':' - Not selected')),
       badge(take.review||'Not reviewed',take.review==='Approved'?'good':undefined),badge(originLabel(take.origin)),
       stale?badge('Out of date','warn'):null):null,
+    take?h(TakeChecks,{key:take.id,host:controller.host,request:take.request,take,onChanged:()=>controller.refresh()}):null,
     h('div',{className:'production-takes-head'},h('h3',{className:'ms-section-title'},'Takes'),
       h('div',{className:'production-row'},
         h(Button,{className:'ms-btn pd-btn',variant:'outline',ref:compareButton,disabled:busy||state.pending||takes.length<2,

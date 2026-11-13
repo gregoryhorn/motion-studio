@@ -4,6 +4,7 @@ import {creationStyles} from './creation-style.js';
 import {workspaceStatus} from './workspace-copy.js';
 import {CREATE_HELP,QuickHelp,HelpPanel} from './help.js';
 import {MethodPicker,chosenMethod} from './methods-ui.js';
+import {TakeChecks} from './director-take.js';
 import {kindIcon} from './production-plan.js';
 const KIND_NOTES={Video:'Video cost and entitlement depend on the selected route. Unknown cost is not free; review before spending.',Music:'Local music engine not enabled yet \u2014 you can import a track.'};
 
@@ -17,13 +18,14 @@ export function shortTitle(text){
 function tone(state){return state==='Ready for review'?'good':state==='Failed'?'warn':undefined;}
 function badge(text,t){return text?h('span',{className:'ms-badge','data-tone':t},text):null;}
 
-export function MotionHeader({active,onCreate,onProduction,status,helpOpen=false,onHelp}){
+export function MotionHeader({active,onCreate,onProduction,status,helpOpen=false,onHelp,onTools}){
   const tab=(label,key,action)=>h('button',{type:'button',className:'ms-tab','aria-current':active===key?'page':undefined,onClick:action},label);
   return h('header',{className:'ms-top'},
     h('div',{className:'ms-brand'},h('span',{className:'ms-mark','aria-hidden':true}),'Motion Studio'),
     h('nav',{className:'ms-tabs','aria-label':'Workspace'},tab('Quick Create','create',onCreate),tab('Production','production',onProduction)),
     h('div',{className:'ms-spacer'}),
     h('p',{className:'ms-status',role:'status'},status),
+    onTools?h('button',{type:'button',className:'ms-tab',onClick:onTools},'Tools'):null,
     onHelp?h('button',{type:'button',className:'ms-tab','aria-expanded':String(helpOpen),onClick:onHelp},helpOpen?'Close help':'Help'):null);
 }
 
@@ -51,7 +53,7 @@ export function takeMedia(kind,take){
 export function originLabel(origin){
   const value=String(origin||''),tool=/^hermes_tool:(.+)$/.exec(value)?.[1];
   if(tool)return 'Made with Hermes '+(TOOLS[tool]||tool.replaceAll('_',' '))+'.';
-  return value==='test_fixture'?'TEST ONLY - not generated.':/import/i.test(value)?'Imported file - checked on import.':'Generated - technical checks passed.';
+  return value==='test_fixture'?'TEST ONLY - not generated.':/import/i.test(value)?'Imported file - structural validation only.':'Generated - see Crystal Ball report and your separate review.';
 }
 
 // The file's real type, read from its first bytes, so a JPEG is never offered as a PNG.
@@ -176,6 +178,7 @@ function TakeCard({take,index,selected,busy,controller,state,feedback}){
     descriptor?h('p',{className:'ms-help'},[descriptor.mime,descriptor.byteLength+' bytes',descriptor.width&&descriptor.height?descriptor.width+' × '+descriptor.height:null,
       descriptor.duration?descriptor.duration+' s':null,'Quality role: '+descriptor.qualityRole].filter(Boolean).join(' · ')):null,
     qa?h('p',{className:'ms-help'},'Technical: '+qa.technical+'. Perceptual: '+qa.perceptual+'. Use eligibility: '+qa.useEligibility+'. User approval: '+qa.userApproval+'. Outstanding: '+(qa.outstanding?.join('; ')||'none recorded')+'.'):null,
+    h(TakeChecks,{host:controller().host,request:selected.request,take,onChanged:()=>controller().refresh()}),
     derivative?h('p',{className:'ms-notice'},'Retained derivative; source retained separately. Conversion is not an original-format download.'):null,
     take.facts?.voice_lineage?h('p',{className:'ms-help'},'Voice conversion: source '+String(take.facts.voice_lineage.native?.format||'format not recorded').toUpperCase()+' retained; review/download derivative is mono 44.1 kHz PCM16 WAV.'):null,
     h('div',{className:'ms-row'},
@@ -233,7 +236,7 @@ function Review({state,selected,controller,refinement,setRefinement,onProduction
       h('p',null,'Progress: '+selected.state+'; certainty: '+selected.certainty+(selected.failure?'; '+selected.failure:''))));
 }
 
-export function CreationPage({createController,onProduction=()=>{}}){
+export function CreationPage({createController,onProduction=()=>{},onTools}){
   const controller=useRef(null),[state,setState]=useState(null),[refinement,keepRefinement]=useState(kept.refinements);
   const [draft,keepDraft]=useState(kept.draft),[helpOpen,setHelpOpen]=useState(false);
   const setDraft=value=>{kept.draft=value;keepDraft(value);},setRefinement=value=>{kept.refinements=value;keepRefinement(value);};
@@ -253,7 +256,7 @@ export function CreationPage({createController,onProduction=()=>{}}){
   const picked=chosenMethod(state.methods,draft.kind,draft.method),importing=picked?.id==='import'||picked?.engine==='import';
   const kinds=new Set(state.rows.map(row=>row.kind||'Sound effects'));
   return h('section',{className:'ms creation-shell'},h('style',null,creationStyles),h('div',{className:'ms-inner'},
-    h(MotionHeader,{active:'create',onCreate:()=>{},onProduction,status:feedback.latest?.text||workspaceStatus(state.status),helpOpen,onHelp:()=>setHelpOpen(!helpOpen)}),
+    h(MotionHeader,{active:'create',onCreate:()=>{},onProduction,onTools,status:feedback.latest?.text||workspaceStatus(state.status),helpOpen,onHelp:()=>setHelpOpen(!helpOpen)}),
     h(HelpPanel,{open:helpOpen,onClose:()=>setHelpOpen(false),title:'Quick Create',guide:CREATE_HELP.guide}),
     h('div',{className:'ms-hero'},
       h('div',null,h('h1',null,'What would you like to make?'),
