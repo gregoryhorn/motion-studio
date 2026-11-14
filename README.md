@@ -7,7 +7,18 @@ A creation-first media studio for Hermes Desktop.
 
 Demo: https://youtu.be/xcm4cA7S9dM
 
-## New in 0.2: Director basics
+## Distribution status
+
+This README describes public `main` (0.2.0), not the catalog-reviewed release.
+As of 2026-11-14, `hermes plugins install motion-studio` installs catalog version
+0.1.0 at commit `712ad80949709c97af7c4eca966ca8682c45a0fb`. That reviewed pin
+has the Creation and Production tools; the Director/tool-card additions below
+and `motion_studio_tools` are public-main additions, not catalog-delivered claims.
+No catalog update or completed current-candidate host qualification is announced
+here. A local Foresight wheel in the private development source is not a
+released dependency or part of this catalog pin.
+
+## New in public main 0.2: Director basics
 
 - **Every take is checked.** [Crystal Ball](https://gregoryhorn.github.io/crystal-ball/) 1.2 installs with Motion Studio and checks each take and each export. Images, audio and video each get the checks that apply to them; anything that doesn't apply shows *Not checked* with a reason, never a false FAIL. A PASS is a technical floor, not creative approval.
 - **Works with the tools you have.** Motion Studio lists what your Hermes can reach and keeps a *tool card* for each one. For a tool it doesn't know yet, it can run one tiny, disclosed test (cost and wait shown first, you confirm once) and remembers what worked.
@@ -28,7 +39,9 @@ These are goals, not shipped features or dates.
 - **Sound effects generation is unavailable outside the author's existing Stable Audio setup.** Its wrapper, Python runtime and `audio.py` script are pinned to that installation's paths and SHA256 digests; this release cannot configure another user's producer. Imported sound effects can still be reviewed and exported. This package doesn't ship models or install engines.
 - **FFmpeg / ffprobe** on `PATH`, used to check imported and generated media.
 - **Crystal Ball 1.2** (installed automatically as a pinned dependency). Optional Hear/See engines are offered separately; without them those checks show *Not checked*.
-- Tested on Linux and Windows Hermes Desktop. macOS has not been tested.
+- Historical Linux/Windows test evidence does not qualify every current-main
+  candidate or host/UI flow. Current-candidate native host qualification remains
+  open; macOS has not been tested.
 
 ## Install
 
@@ -51,7 +64,7 @@ The plugin registers three agent tools, `motion_studio_creation`, `motion_studio
 - **Storage:** projects and takes are stored in the profile's plugin data directory. Generation stays off until a chat is connected.
 - **No telemetry.**
 
-Hermes' install-time security scan rates this package *caution*: it runs media tools on file descriptors and includes subprocess and setup helpers. Hermes asks you to confirm before installing.
+Hermes' install-time security scan rates this package *caution*: it runs media tools on file descriptors and includes subprocess and setup helpers. Catalog installs at the exact reviewed pin accept reviewed caution findings without a confirmation prompt; dangerous findings still block. A bare repository-URL install is not the same trust path and can require scanner confirmation.
 
 ## Known limits
 
